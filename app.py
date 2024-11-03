@@ -70,7 +70,7 @@ def extract_text_from_pdf(file):
 
 # Function to send data to the local LLM and get questions
 def generate_questions(resume_text, domain):
-    url = "https://57e5-34-74-197-114.ngrok-free.app/api/generate/"
+    url = "https://79c7-34-16-180-7.ngrok-free.app/api/generate/"
     prompt = (
         f"Generate 20 interview questions for a candidate's mock interview in the {domain} domain. "
         f"The questions should be based on the following resume text:\n\n{resume_text}\n\n"
@@ -93,7 +93,7 @@ def generate_questions(resume_text, domain):
 
 # Function to get feedback from the LLM
 def get_feedback(questions, responses):
-    url = "https://57e5-34-74-197-114.ngrok-free.app/api/generate/"
+    url = "https://79c7-34-16-180-7.ngrok-free.app/api/generate/"
     prompt = (
         "Here are the questions and the corresponding responses from the mock interview:\n\n"
     )
