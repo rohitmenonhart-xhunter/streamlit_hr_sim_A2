@@ -10,10 +10,6 @@ import numpy as np
 import scipy.io.wavfile as wav
 import tempfile
 
-# Constants for Deepgram API
-DEEPGRAM_API_KEY = "1ec8dd8fd6aebdb7a17f5e365e092f8b4e00414c"
-DEEPGRAM_TTS_URL = "https://api.deepgram.com/v1/speak?model=aura-asteria-en"
-DEEPGRAM_STT_URL = "https://api.deepgram.com/v1/listen?language=en&model=nova-2"
 
 
 # Helper to fetch audio from Deepgram TTS API
