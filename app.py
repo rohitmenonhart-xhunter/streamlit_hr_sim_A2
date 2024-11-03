@@ -3,6 +3,7 @@ import PyPDF2
 import requests
 import json
 import os
+import io
 from pydub import AudioSegment
 from pydub.playback import play
 import sounddevice as sd
@@ -10,12 +11,10 @@ import numpy as np
 import scipy.io.wavfile as wav
 import tempfile
 
-DEEPGRAM_API_KEY = "1ec8dd8fd6aebdb7a17f5e365e092f8b4e00414c"
-
 # Constants for Deepgram API
+DEEPGRAM_API_KEY = "1ec8dd8fd6aebdb7a17f5e365e092f8b4e00414c"
 DEEPGRAM_TTS_URL = "https://api.deepgram.com/v1/speak?model=aura-asteria-en"
 DEEPGRAM_STT_URL = "https://api.deepgram.com/v1/listen?language=en&model=nova-2"
-
 
 # Helper to fetch audio from Deepgram TTS API
 def text_to_speech(text):
@@ -24,15 +23,15 @@ def text_to_speech(text):
         "Content-Type": "text/plain"
     }
     response = requests.post(DEEPGRAM_TTS_URL, headers=headers, data=text)
-    with open("question_audio.mp3", "wb") as audio_file:
-        audio_file.write(response.content)
-
+    
+    # Convert to WAV format
+    audio = AudioSegment.from_file(io.BytesIO(response.content), format="mp3")
+    audio.export("question_audio.wav", format="wav")
 
 # Helper to play audio
 def play_audio(filename):
-    audio = AudioSegment.from_mp3(filename)
+    audio = AudioSegment.from_wav(filename)
     play(audio)
-
 
 # Function to record audio from the microphone
 def record_audio(duration=15):
@@ -46,7 +45,6 @@ def record_audio(duration=15):
         temp_audio_path = temp_audio.name
     return temp_audio_path
 
-
 # Function to transcribe audio using Deepgram STT API
 def speech_to_text(audio_path):
     with open(audio_path, "rb") as audio_file:
@@ -56,10 +54,8 @@ def speech_to_text(audio_path):
         }
         response = requests.post(DEEPGRAM_STT_URL, headers=headers, data=audio_file)
     if response.status_code == 200:
-        return response.json().get("results", {}).get("channels", [])[0].get("alternatives", [])[0].get("transcript",
-                                                                                                        "")
+        return response.json().get("results", {}).get("channels", [])[0].get("alternatives", [])[0].get("transcript", "")
     return "Transcription failed."
-
 
 # Function to extract text from PDF
 def extract_text_from_pdf(file):
@@ -69,10 +65,9 @@ def extract_text_from_pdf(file):
         text += page.extract_text() + "\n"
     return text
 
-
 # Function to send data to the local LLM and get questions
 def generate_questions(resume_text, domain):
-    url = "https://79c7-34-16-180-7.ngrok-free.app/api/generate/"
+    url = "https://57e5-34-74-197-114.ngrok-free.app/api/generate/"
     prompt = (
         f"Generate 20 interview questions for a candidate's mock interview in the {domain} domain. "
         f"The questions should be based on the following resume text:\n\n{resume_text}\n\n"
@@ -92,10 +87,9 @@ def generate_questions(resume_text, domain):
     questions = [q.strip() for q in full_text.splitlines() if q.strip()]
     return questions
 
-
 # Function to get feedback from the LLM
 def get_feedback(questions, responses):
-    url = "https://79c7-34-16-180-7.ngrok-free.app/api/generate/"
+    url = "https://57e5-34-74-197-114.ngrok-free.app/api/generate/"
     prompt = (
         "Here are the questions and the corresponding responses from the mock interview:\n\n"
     )
@@ -106,10 +100,8 @@ def get_feedback(questions, responses):
     payload = {"model": "mistral", "prompt": prompt}
     response = requests.post(url, json=payload)
     if response.status_code == 200:
-        return response.json().get("results", {}).get("channels", [])[0].get("alternatives", [])[0].get("transcript",
-                                                                                                        "")
+        return response.json().get("results", {}).get("channels", [])[0].get("alternatives", [])[0].get("transcript", "")
     return "Feedback request failed."
-
 
 # Streamlit app layout
 st.set_page_config(page_title="HR Mock Interview Generator", layout="wide")
@@ -144,7 +136,7 @@ if "questions" in st.session_state and st.session_state["questions"]:
         st.subheader(f"Question 1: {question_text}")
         text_to_speech(question_text)
         st.write("Playing question audio...")
-        play_audio("question_audio.mp3")
+        play_audio("question_audio.wav")
 
         # Automatically record answer after the question audio
         answer_audio_path = record_audio(duration=15)
@@ -166,7 +158,7 @@ if "questions" in st.session_state and st.session_state["questions"]:
         # Generate and play audio for the question
         text_to_speech(question_text)
         st.write("Playing question audio...")
-        play_audio("question_audio.mp3")
+        play_audio("question_audio.wav")
 
         # Automatically record answer after the question audio
         answer_audio_path = record_audio(duration=15)
